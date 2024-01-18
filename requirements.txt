@@ -1,0 +1,7 @@
+alpaca-py
+backtrader
+yfinance
+requests-cache
+tqdm
+scikit-learn
+tensorflow
