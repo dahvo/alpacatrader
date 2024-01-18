@@ -11,7 +11,7 @@ from bt_stuff import AlpacaStockData, MyStrategy, FractionalSizer, BuyDipsStrate
 from helper_functions import time_it
 
 starting_cash = 1000.0
-start_time = datetime.now() - relativedelta(months=6)
+start_time = datetime.now() - relativedelta(years=2)
 
 
 def get_stock_bars_for_bt(symbols):
@@ -26,7 +26,7 @@ def get_stock_bars_for_bt(symbols):
         # Define request parameters
         request_params = StockBarsRequest(
             symbol_or_symbols=symbols,
-            timeframe=TimeFrame.Hour,
+            timeframe=TimeFrame.Minute,
             start=start_time
         )
 
@@ -185,7 +185,7 @@ progress_bar = tqdm(total=len(tickers), desc="Fetching Bars")
 # Loop through tickers
 for ticker in tickers:
     data = get_stock_bars_for_bt(ticker)
-    data.to_csv(f"data/bars/{ticker}_6mo_hr.csv", index=False)
+    data.to_csv(f"data/bars/{ticker}_2yr_hr.csv", index=False)
 
     # Update the progress bar
     progress_bar.update(1)
