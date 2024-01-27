@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="stocktrader" jdkType="Python SDK" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/llama" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/data" />
+    </content>
+    <orderEntry type="jdk" jdkName="stocktradernlp" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="PackageRequirementsSettings">
+    <option name="versionSpecifier" value="Don't specify version" />
+    <option name="removeUnused" value="true" />
+    <option name="modifyBaseFiles" value="true" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="PLAIN" />

@@ -1,0 +1,65 @@
+## -- This function will not include news realeased during market hours
+# def aggregate_news_by_day_and_weekend(df):
+#     """Aggregates news data by day and combines weekend data."""
+#     df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+#     start_time = pd.Timestamp('16:00', tz='America/New_York').time()
+#     end_time = pd.Timestamp('09:30', tz='America/New_York').time()
+#
+#     def adjust_date(row):
+#         if row.time() >= start_time or row.time() <= end_time:
+#             return row.date()
+#         return (row - pd.Timedelta(days=1)).date()
+#
+#     df['adjusted_date'] = df['created_at'].apply(adjust_date)
+#     df['headline'] = df['headline'].astype(str)
+#     df['summary'] = df['summary'].astype(str)
+#
+#     weekend_data = df[df['adjusted_date'].dt.dayofweek >= 5]
+#     weekend_combined = weekend_data.groupby(['adjusted_date']).agg({'headline': ' '.join, 'summary': ' '.join})
+#
+#     df = df.groupby(['adjusted_date']).agg({'headline': ' '.join, 'summary': ' '.join}).reset_index()
+#     df['adjusted_date'] = pd.to_datetime(df['adjusted_date']).dt.tz_localize('US/Eastern').dt.tz_convert('UTC')
+#
+#     df = pd.concat([df, weekend_combined])
+#     return df
+
+
+# ----- CSV File Handling Functions -----
+
+def count_csv_lines(file_path):
+    """Counts the number of lines in a CSV file."""
+    with open(file_path, 'r', newline='', encoding='utf-8') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        return sum(1 for row in csv_reader)
+
+def find_longest_csv_file(root_directory):
+    """Finds the CSV file with the most lines in a directory and its subdirectories."""
+    longest_csv_file = None
+    max_lines = 0
+
+    for root, dirs, files in os.walk(root_directory):
+        for file in files:
+            if file.endswith('.csv'):
+                file_path = os.path.join(root, file)
+                lines_in_csv = count_csv_lines(file_path)
+                if lines_in_csv > max_lines:
+                    max_lines = lines_in_csv
+                    longest_csv_file = file_path
+
+    if longest_csv_file:
+        print(f"Longest CSV file: {longest_csv_file}")
+        print(f"Number of lines: {max_lines}")
+    else:
+        print("No CSV files found.")
+
+    return longest_csv_file, max_lines
+
+
+def remove_market_hours(df, column):
+    """Removes rows within the market hours from a DataFrame."""
+    df[column] = pd.to_datetime(df[column]).dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
+    market_open = pd.Timestamp('09:30', tz='America/New_York').time()
+    market_close = pd.Timestamp('16:00', tz='America/New_York').time()
+    df = df[~df[column].dt.time.between(market_open, market_close)]
+    df[column] = df[column].dt.tz_convert('UTC')
+    return df
