@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 
 # ----- Bars Processing Functions -----
+
+
 def process_bars_data(ticker):
     """Processes bars data for a given ticker and combines it by day."""
     bars_df = pd.read_csv(f'../../data/bars/{ticker}/2y_5m.csv')
@@ -35,6 +37,8 @@ def process_bars_data(ticker):
     ]
     choices = [1, -1]
     daily_df['target'] = np.select(conditions, choices, default=0)
+    # Remove the first day where percent change is NaN
+    daily_df = daily_df.dropna(subset=['percent_change'])
 
     return daily_df
 

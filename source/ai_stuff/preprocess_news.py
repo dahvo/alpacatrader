@@ -1,40 +1,65 @@
 import pandas as pd
-import re
-import csv
+from pandas.tseries.offsets import BDay
+from preprocess_bars import process_bars_data  # Make sure process_bars.py is in the same directory or in the Python path
 import os
 # ----- News Processing Functions -----
-def clean_text(df, column):
-    """Cleans text in a DataFrame column by removing special characters and whitespace."""
-    pattern = r'[^\w\s&\'",.!?]|[\r\n]| '
-    try:
-        df[column] = df[column].apply(lambda x: re.sub(pattern, ' ', str(x)) if pd.notna(x) else x)
-    except Exception as e:
-        print(f"Error: {e}")
-    return df
-
+# Aggregate news articles by day, combine weekends
 def aggregate_news_by_day(ticker):
     df = pd.read_csv(f'../../data/news/{ticker}/TickerNewsSummary.csv')
-    """Aggregates news data by day."""
+
     # Ensure 'created_at' is in datetime format and convert to US/Eastern timezone
     df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_convert('US/Eastern')
 
-    # Extract the date from 'created_at' for aggregation
-    df['date'] = df['created_at'].dt.date
+    # Adjust weekends: If the day is Saturday or Sunday, shift it to the following Monday
+    df['adjusted_date'] = df['created_at'].apply(lambda x: x + BDay(1) if x.dayofweek in [5, 6] else x)
 
-    # Ensure that 'headline' and 'summary' columns are of type string
+    # Extract just the date part for grouping
+    df['adjusted_date'] = df['adjusted_date'].dt.date
+
+    # Ensure that 'headline' columns are of type string
     df['headline'] = df['headline'].astype(str)
 
+    # Group by the adjusted date and concatenate all headlines into a single string for each date
+    aggregated_df = df.groupby(['adjusted_date']).agg({'headline': lambda x: ' '.join(x)})
 
-    # Group by the date and aggregate headlines and summaries
-    aggregated_df = df.groupby(['date']).agg({'headline': ' '.join})
-
-    # Reset index to turn 'date' back into a column
+    # Reset index to turn 'adjusted_date' back into a column
     aggregated_df = aggregated_df.reset_index()
 
-    # Optional: Convert 'date' back to a datetime object, localized to UTC
-    #aggregated_df['date'] = pd.to_datetime(aggregated_df['date']).dt.tz_localize('US/Eastern').dt.tz_convert('UTC')
-
     return aggregated_df
+
+def ensure_timezone(df, timezone='US/Eastern'):
+    """Ensure the index of the DataFrame is in the specified timezone."""
+    if df.index.tz is None:
+        df.index = df.index.tz_localize(timezone)
+    else:
+        df.index = df.index.tz_convert(timezone)
+    return df
+# Add target column to news data
+def merge_news_and_bars_data(ticker):
+    # Process news data
+    news_df = aggregate_news_by_day(ticker)
+
+    # Convert 'adjusted_date' in news_df to datetime and set to US/Eastern timezone
+    news_df['adjusted_date'] = pd.to_datetime(news_df['adjusted_date']).dt.tz_localize('US/Eastern')
+
+    # Process bars data
+    bars_df = process_bars_data(ticker)
+
+    # Ensure bars_df index is in US/Eastern timezone using the ensure_timezone function
+    bars_df = ensure_timezone(bars_df, timezone='US/Eastern')
+
+    # Reset index of bars_df to merge on 't'
+    bars_df_reset = bars_df.reset_index()
+
+    # Merge news_df with bars_df_reset to include 'target', 'percent_change', and 't' (timestamp)
+    merged_df = pd.merge(news_df, bars_df_reset[['t', 'target', 'percent_change']], left_on='adjusted_date',
+                         right_on='t', how='left')
+
+    # Select relevant columns and rename for clarity
+    merged_df = merged_df[['adjusted_date', 'headline', 'target', 'percent_change', 't']]
+    merged_df.rename(columns={'t': 'time_of_bars'}, inplace=True)
+
+    return merged_df
 
 #Find the top 20 tickers with the most news articles
 def find_top_20_csv_files():
@@ -73,9 +98,10 @@ def find_top_20_csv_files():
 # ----- Example Usage -----
 
 if __name__ == "__main__":
-    ticker = 'BAC'
-    output_path = "../../data/training_data/blah_news.csv"
-    df = aggregate_news_by_day(ticker)
-    df.to_csv(output_path, index=False)
-    #find_top_20_csv_files()
+    ticker = 'A'  # Example ticker
+    merged_df = merge_news_and_bars_data(ticker)
+
+    # Specify the output path for the merged data
+    merged_output_path = "../../data/training_data/merged_news_bars_{}.csv".format(ticker)
+    merged_df.to_csv(merged_output_path, index=False)
 
