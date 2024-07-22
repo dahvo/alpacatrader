@@ -1,5 +1,0 @@
-paper_key = "PKRNXZS43FKBCLT2K0J2"
-paper_secret = "sgoPEh9UaAcGTz6WrmBLOuoqzub1fohFlbRWBqUW"
-live_key = "AK28YDGM9INPV5RX5KTS"
-live_secret = "E2Ds6KEf1ExrofL0TFT6a6f5XXfQbX4aHXm5TYj2"
-alpha_vantage_key = "PP8HIDPQA5FWVX2S"
